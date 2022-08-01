@@ -40,6 +40,7 @@ class FormularioProdutoActivity : AppCompatActivity() {
             idProduto = produtoCarregado.id
             title = "Alterar produto"
             binding.activityFormularioProdutoImagem.tentaCarregarImagem(produtoCarregado.imagem)
+            url = produtoCarregado.imagem
             binding.activityFormularioProdutoNome.setText(produtoCarregado.nome)
             binding.activityFormularioProdutoDescricao.setText(produtoCarregado.descricao)
             binding.activityFormularioProdutoValor.setText(produtoCarregado.valor.toPlainString())
