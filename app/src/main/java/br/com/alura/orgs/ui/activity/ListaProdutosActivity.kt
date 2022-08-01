@@ -3,14 +3,18 @@ package br.com.alura.orgs.ui.activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.room.Room
 import br.com.alura.orgs.database.AppDatabase
 import br.com.alura.orgs.databinding.ActivityListaProdutosActivityBinding
 import br.com.alura.orgs.ui.recyclerview.adapter.ListaProdutosAdapter
+import kotlinx.coroutines.*
 
 class ListaProdutosActivity : AppCompatActivity() {
 
     private val adapter = ListaProdutosAdapter(context = this)
+
+    //executa na thread nova
+    private val scope = CoroutineScope(Dispatchers.IO)
+
     private val binding by lazy {
         ActivityListaProdutosActivityBinding.inflate(layoutInflater)
     }
@@ -26,7 +30,18 @@ class ListaProdutosActivity : AppCompatActivity() {
         super.onResume()
         val db = AppDatabase.instancia(this)
         val produtoDao = db.produtoDao()
-        adapter.atualiza(produtoDao.buscaTodos())
+
+        scope.launch {
+            val produtos = withContext(Dispatchers.IO) {
+                produtoDao.buscaTodos()
+            }
+
+            //oprações de manipulação de layoult devem ser executadas na thread principal
+            withContext(Dispatchers.Main){
+                adapter.atualiza(produtos)
+            }
+        }
+
     }
 
     private fun configuraFab() {

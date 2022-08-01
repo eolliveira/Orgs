@@ -8,10 +8,15 @@ import br.com.alura.orgs.extensions.formataParaMoedaBrasileira
 import br.com.alura.orgs.extensions.tentaCarregarImagem
 import br.com.alura.orgs.model.Produto
 import br.com.alura.orgs.ui.dialog.FormularioImagemDialog
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.math.BigDecimal
 
 class FormularioProdutoActivity : AppCompatActivity() {
 
+    //executa na thread nova
+    private val scope = CoroutineScope(Dispatchers.IO)
     private var idProduto: Long = 0L
     private val binding by lazy {
         ActivityFormularioProdutoBinding.inflate(layoutInflater)
@@ -46,14 +51,16 @@ class FormularioProdutoActivity : AppCompatActivity() {
         val db = AppDatabase.instancia(this)
         val produtoDao = db.produtoDao()
         botaoSalvar.setOnClickListener {
-            if (idProduto != 0L) {
-                val produtoNovo = criaProduto()
-                produtoDao.altera(produtoNovo)
-            } else {
-                val produtoNovo = criaProduto()
-                produtoDao.salva(produtoNovo)
+            scope.launch {
+                if (idProduto != 0L) {
+                    val produtoNovo = criaProduto()
+                    produtoDao.altera(produtoNovo)
+                } else {
+                    val produtoNovo = criaProduto()
+                    produtoDao.salva(produtoNovo)
+                }
+                finish()
             }
-            finish()
         }
     }
 

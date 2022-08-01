@@ -12,6 +12,10 @@ import br.com.alura.orgs.databinding.ActivityDetalhesProdutoBinding
 import br.com.alura.orgs.extensions.formataParaMoedaBrasileira
 import br.com.alura.orgs.extensions.tentaCarregarImagem
 import br.com.alura.orgs.model.Produto
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private const val TAG = "DetalhesProduto"
 
@@ -22,6 +26,9 @@ class DetalhesProdutoActivity : AppCompatActivity() {
     val produtoDao by lazy {
         AppDatabase.instancia(this).produtoDao()
     }
+
+    //executa na thread nova
+    private val scope = CoroutineScope(Dispatchers.IO)
 
     private val binding by lazy {
         ActivityDetalhesProdutoBinding.inflate(layoutInflater)
@@ -38,13 +45,18 @@ class DetalhesProdutoActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
-        produtoId?.let { id ->
-            produto = produtoDao.findById(id)
-        }
+        scope.launch {
+            produtoId?.let { id ->
+                produto = produtoDao.findById(id)
+            }
 
-        produto?.let {
-            preencheCampos(it)
-        } ?: finish()
+            withContext(Dispatchers.Main) {
+                produto?.let {
+                    //exec na thread principal
+                    preencheCampos(it)
+                } ?: finish()
+            }
+        }
 
     }
 
@@ -56,9 +68,10 @@ class DetalhesProdutoActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.menu_detalhes_produto_remover -> {
-                produto?.let { produtoDao.remove(it) }
-
-                finish()
+                scope.launch {
+                    produto?.let { produtoDao.remove(it) }
+                    finish()
+                }
             }
             R.id.menu_detalhes_produto_editar -> {
                 Intent(this, FormularioProdutoActivity::class.java).apply {
@@ -74,7 +87,6 @@ class DetalhesProdutoActivity : AppCompatActivity() {
     private fun tentaCarregarProduto() {
         intent.getParcelableExtra<Produto>(CHAVE_PRODUTO)?.let { produtoCarregado ->
             produtoId = produtoCarregado.id
-
         } ?: finish()
     }
 
